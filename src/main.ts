@@ -1,24 +1,47 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import { home } from './pages/home/home';
+import { about } from './pages/about/about';
+import { header } from './components/layout/header/header';
+import { footer } from './components/layout/footer/footer';
+import './style.css';
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript 5.9 <br>The best one</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+type PageRenderer = (target?: Element | null) => void;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const routes: Record<string, PageRenderer> = {
+  '/': home,
+  '/about': about,
+};
+
+const renderAppShell = () => {
+  const app = document.querySelector<HTMLDivElement>('#app');
+  if (!app) return;
+  app.innerHTML = /*html*/ `
+    <app-header></app-header>
+    <app-view></app-view>
+    <app-footer></app-footer>
+  `;
+
+  header(app.querySelector('app-header'));
+  footer(app.querySelector('app-footer'));
+};
+
+const renderCurrentPage = () => {
+  const outlet = document.querySelector('app-view');
+  if (!outlet) return;
+  const renderPage = routes[window.location.pathname] ?? home;
+  renderPage(outlet);
+};
+
+document.addEventListener('click', (event) => {
+  const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[data-link]');
+  if (!link) return;
+  event.preventDefault();
+  const href = link.getAttribute('href');
+  if (!href) return;
+  window.history.pushState({}, '', href);
+  renderCurrentPage();
+});
+
+window.addEventListener('popstate', renderCurrentPage);
+
+renderAppShell();
+renderCurrentPage();
